@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OWARIN Card Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,300;0,400;0,700;0,900;1,700;1,900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--bg:#0e0e0e;--surface:#1a1a1a;--surface2:#242424;--border:#2e2e2e;--text:#e8e8e8;--muted:#666;--accent:#22C55E;--radius:8px;}
+body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;min-height:100vh;font-size:13px;}
+.app{max-width:1000px;margin:0 auto;padding:24px 16px;}
+header{display:flex;align-items:center;gap:16px;margin-bottom:24px;padding-bottom:16px;border-bottom:0.5px solid var(--border);}
+.logo-mark{width:36px;height:36px;border:1.5px solid var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);letter-spacing:1px;flex-shrink:0;}
+h1{font-size:15px;font-weight:700;letter-spacing:4px;}
+.badge{font-size:10px;letter-spacing:3px;color:var(--muted);padding:3px 8px;border:0.5px solid var(--border);border-radius:4px;}
+.api-bar{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;display:flex;gap:8px;align-items:center;}
+.api-bar label{font-size:11px;color:var(--muted);white-space:nowrap;letter-spacing:2px;}
+input[type=password],input[type=text]{background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--text);font-family:'Space Mono',monospace;font-size:12px;outline:none;width:100%;}
+input[type=password]:focus,input[type=text]:focus{border-color:var(--accent);}
+input[type=password]::placeholder,input[type=text]::placeholder{color:var(--muted);}
+.api-bar input{flex:1;}
+.btn{padding:9px 16px;background:transparent;border:0.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;letter-spacing:1px;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-primary{border-color:var(--accent);color:var(--accent);}
+.btn-primary:hover{background:var(--accent);color:#000;}
+.input-row{display:flex;gap:8px;margin-bottom:8px;}
+.input-row input{flex:1;}
+.status{font-size:11px;color:var(--muted);letter-spacing:1px;min-height:18px;margin-bottom:12px;}
+.status.ok{color:var(--accent);}
+.status.err{color:#ff6b6b;}
+.main{display:grid;grid-template-columns:1fr 210px;gap:16px;align-items:start;}
+#canvasWrap{position:relative;}
+canvas{width:100%;border-radius:var(--radius);border:0.5px solid var(--border);display:block;background:#111;}
+.canvas-size{font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:6px;text-align:center;}
+.sidebar{display:flex;flex-direction:column;gap:10px;}
+.ctrl-group{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px;}
+.ctrl-group label{font-size:10px;letter-spacing:2px;color:var(--muted);display:block;margin-bottom:8px;}
+.ctrl-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;}
+.ctrl-row span{color:var(--text);font-weight:700;}
+input[type=range]{width:100%;-webkit-appearance:none;height:3px;border-radius:2px;background:var(--border);outline:none;margin:4px 0;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:none;}
+input[type=color]{width:100%;height:30px;border:0.5px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer;padding:2px;}
+.caption-section{margin-top:16px;}
+.caption-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.caption-header span{font-size:10px;letter-spacing:2px;color:var(--muted);}
+textarea{width:100%;height:240px;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px;color:var(--text);font-family:'Space Mono',monospace;font-size:12px;line-height:1.7;resize:vertical;outline:none;}
+.hint{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.6;}
+.drag-hint{font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:6px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo-mark">OW</div>
+    <h1>OWARIN CARD STUDIO</h1>
+    <div class="badge">GEMINI 2.5 PRO</div>
+  </header>
+
+  <div class="api-bar">
+    <label>API KEY</label>
+    <input type="password" id="apiKey" placeholder="AIza...">
+    <button class="btn" onclick="saveKey()">SAVE</button>
+  </div>
+
+  <div class="input-row">
+    <input type="text" id="gameName" placeholder="ชื่อเกม เช่น Shadow of the Colossus, Silent Hill 2...">
+    <button class="btn btn-primary" id="genBtn" onclick="generate()">▶ สร้าง CONTENT</button>
+  </div>
+  <div class="status" id="status"></div>
+
+  <div class="main">
+    <div id="canvasWrap">
+      <canvas id="cv"></canvas>
+      <div class="canvas-size">1638 × 2048 px</div>
+      <div class="drag-hint">ลากแต่ละส่วนได้อิสระ · Scroll = ซูมภาพ BG</div>
+    </div>
+
+    <div class="sidebar">
+      <div class="ctrl-group">
+        <label>ภาพ BG</label>
+        <input type="file" id="bgFile" accept="image/*" style="display:none;">
+        <button class="btn" style="width:100%;" onclick="document.getElementById('bgFile').click()">อัปโหลด BG</button>
+        <p class="hint">ลาก = เลื่อน BG<br>Scroll บน BG = ซูม</p>
+      </div>
+
+      <div class="ctrl-group">
+        <label>ชื่อเกม</label>
+        <div class="ctrl-row">size <span id="gnV">26</span></div>
+        <input type="range" id="gnSz" min="14" max="60" value="26" oninput="document.getElementById('gnV').textContent=this.value;drawCanvas();">
+      </div>
+
+      <div class="ctrl-group">
+        <label>Hook Text</label>
+        <div class="ctrl-row">size <span id="hV">110</span></div>
+        <input type="range" id="hSz" min="40" max="200" value="110" oninput="document.getElementById('hV').textContent=this.value;drawCanvas();">
+      </div>
+
+      <div class="ctrl-group">
+        <label>Sub Text</label>
+        <div class="ctrl-row">size <span id="sV">36</span></div>
+        <input type="range" id="sSz" min="16" max="72" value="36" oninput="document.getElementById('sV').textContent=this.value;drawCanvas();">
+      </div>
+
+      <div class="ctrl-group">
+        <label>สีเน้น</label>
+        <input type="color" id="acCol" value="#22C55E" oninput="drawCanvas();">
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;" onclick="downloadImage()">↓ ดาวน์โหลด JPG</button>
+    </div>
+  </div>
+
+  <div class="caption-section">
+    <div class="caption-header">
+      <span>FACEBOOK CAPTION</span>
+      <button class="btn" onclick="copyCaption()">COPY</button>
+    </div>
+    <textarea id="captionOut" readonly placeholder="Caption จะปรากฏที่นี่..."></textarea>
+  </div>
+</div>
+
+<script>
+const W=1638,H=2048;
+let bgImg=null,logoImg=null;
+let bgX=0,bgY=0,bgScale=1;
+let gData=null;
+
+// Separate positions for each text element (in canvas px)
+const pos = {
+  gameName: {x:80, y:H-480},
+  hook:     {x:80, y:H-360},
+  sub:      {x:80, y:H-220},
+};
+
+// Dragging state
+let dragTarget=null,dragOx=0,dragOy=0;
+let bgDragging=false,bgLmx=0,bgLmy=0;
+
+function saveKey(){const k=document.getElementById('apiKey').value.trim();if(k){localStorage.setItem('gem_key',k);setStatus('บันทึก API Key แล้ว','ok');}}
+function getKey(){const s=localStorage.getItem('gem_key')||'';if(s&&!document.getElementById('apiKey').value)document.getElementById('apiKey').value=s;return document.getElementById('apiKey').value.trim()||s;}
+
+function loadLogo(){
+  return new Promise(r=>{
+    const i=new Image();i.crossOrigin='anonymous';
+    i.onload=()=>{logoImg=i;r();};i.onerror=()=>r();
+    i.src='https://raw.githubusercontent.com/owaowarin/owarin-assets/f7ae029fe60c73c107803b772b16aeb30adf8bca/owarin-logo-no-bg.png';
+  });
+}
+
+const cv=()=>document.getElementById('cv');
+const ctx=()=>cv().getContext('2d');
+const canvasScale=()=>W/(cv().offsetWidth||1);
+
+function initCanvas(){
+  const c=cv();c.width=W;c.height=H;
+  c.style.height=(c.offsetWidth*H/W)+'px';
+  setupEvents(c);
+  drawCanvas();
+}
+
+// Hit test: which text element was clicked?
+function hitTest(cx,cy){
+  const x=ctx();
+  const hSz=+document.getElementById('hSz').value||110;
+  const sSz=+document.getElementById('sSz').value||36;
+  const gnSz=+document.getElementById('gnSz').value||26;
+  const pad=20;
+
+  // gameName
+  x.font='400 '+gnSz+'px monospace';
+  const gnW=x.measureText((gData?.game_name||'GAME NAME').toUpperCase()).width;
+  if(cx>=pos.gameName.x-pad&&cx<=pos.gameName.x+gnW+pad&&cy>=pos.gameName.y-gnSz-pad&&cy<=pos.gameName.y+pad) return 'gameName';
+
+  // hook
+  const hook=gData?.hook_text||'';
+  x.font='900 '+hSz+'px Kanit,sans-serif';
+  const hW=x.measureText(hook).width;
+  if(cx>=pos.hook.x-pad&&cx<=pos.hook.x+hW+pad&&cy>=pos.hook.y-hSz-pad&&cy<=pos.hook.y+pad) return 'hook';
+
+  // sub
+  const sub=gData?.hook_sub||'';
+  const lines=sub.split('\n');
+  const subH=lines.length*sSz*1.55;
+  x.font='400 '+sSz+'px Kanit,sans-serif';
+  const maxW=Math.max(...lines.map(l=>x.measureText(l).width));
+  if(cx>=pos.sub.x-pad&&cx<=pos.sub.x+maxW+pad&&cy>=pos.sub.y-pad&&cy<=pos.sub.y+subH+pad) return 'sub';
+
+  return null;
+}
+
+function setupEvents(c){
+  c.addEventListener('mousedown',e=>{
+    e.preventDefault();
+    const r=c.getBoundingClientRect(),sc=canvasScale();
+    const cx=(e.clientX-r.left)*sc,cy=(e.clientY-r.top)*sc;
+    const hit=hitTest(cx,cy);
+    if(hit){
+      dragTarget=hit;dragOx=cx-pos[hit].x;dragOy=cy-pos[hit].y;
+      c.style.cursor='grabbing';
+    } else {
+      bgDragging=true;bgLmx=e.clientX;bgLmy=e.clientY;
+      c.style.cursor='move';
+    }
+  });
+  window.addEventListener('mousemove',e=>{
+    if(dragTarget){
+      const r=c.getBoundingClientRect(),sc=canvasScale();
+      const cx=(e.clientX-r.left)*sc,cy=(e.clientY-r.top)*sc;
+      pos[dragTarget].x=Math.max(0,cx-dragOx);
+      pos[dragTarget].y=Math.max(20,cy-dragOy);
+      drawCanvas();
+    } else if(bgDragging&&bgImg){
+      const r=c.getBoundingClientRect(),sc=W/r.width;
+      bgX+=(e.clientX-bgLmx)*sc;bgY+=(e.clientY-bgLmy)*sc;
+      constrainBg();drawCanvas();bgLmx=e.clientX;bgLmy=e.clientY;
+    }
+  });
+  window.addEventListener('mouseup',()=>{
+    dragTarget=null;bgDragging=false;
+    c.style.cursor='default';
+  });
+  c.addEventListener('wheel',e=>{
+    e.preventDefault();if(!bgImg)return;
+    const r=c.getBoundingClientRect();
+    const cx=(e.clientX-r.left)/r.width*W,cy=(e.clientY-r.top)/r.height*H;
+    const f=e.deltaY<0?1.06:0.94,min=Math.max(W/bgImg.width,H/bgImg.height);
+    bgScale=Math.max(min,bgScale*f);bgX=cx-(cx-bgX)*f;bgY=cy-(cy-bgY)*f;
+    constrainBg();drawCanvas();
+  },{passive:false});
+
+  // Touch events
+  let ltd=0,touchDragTarget=null,touchOx=0,touchOy=0;
+  c.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    if(e.touches.length===1){
+      const r=c.getBoundingClientRect(),sc=canvasScale();
+      const cx=(e.touches[0].clientX-r.left)*sc,cy=(e.touches[0].clientY-r.top)*sc;
+      const hit=hitTest(cx,cy);
+      if(hit){touchDragTarget=hit;touchOx=cx-pos[hit].x;touchOy=cy-pos[hit].y;}
+      else{bgDragging=true;bgLmx=e.touches[0].clientX;bgLmy=e.touches[0].clientY;}
+    }
+    if(e.touches.length===2)ltd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+  },{passive:false});
+  c.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    const r=c.getBoundingClientRect(),sc=canvasScale();
+    if(e.touches.length===1){
+      if(touchDragTarget){
+        const cx=(e.touches[0].clientX-r.left)*sc,cy=(e.touches[0].clientY-r.top)*sc;
+        pos[touchDragTarget].x=Math.max(0,cx-touchOx);
+        pos[touchDragTarget].y=Math.max(20,cy-touchOy);
+        drawCanvas();
+      } else if(bgDragging&&bgImg){
+        bgX+=(e.touches[0].clientX-bgLmx)*W/r.width;bgY+=(e.touches[0].clientY-bgLmy)*H/r.height;
+        constrainBg();drawCanvas();bgLmx=e.touches[0].clientX;bgLmy=e.touches[0].clientY;
+      }
+    }
+    if(e.touches.length===2&&bgImg){
+      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      const min=Math.max(W/bgImg.width,H/bgImg.height);
+      bgScale=Math.max(min,bgScale*(d/ltd));ltd=d;constrainBg();drawCanvas();
+    }
+  },{passive:false});
+  c.addEventListener('touchend',()=>{touchDragTarget=null;bgDragging=false;},{passive:true});
+}
+
+function constrainBg(){
+  if(!bgImg)return;
+  const iw=bgImg.width*bgScale,ih=bgImg.height*bgScale;
+  if(bgX>0)bgX=0;if(bgY>0)bgY=0;if(bgX+iw<W)bgX=W-iw;if(bgY+ih<H)bgY=H-ih;
+}
+function fitBg(){
+  if(!bgImg)return;
+  bgScale=Math.max(W/bgImg.width,H/bgImg.height);
+  bgX=(W-bgImg.width*bgScale)/2;bgY=(H-bgImg.height*bgScale)/2;
+}
+
+function drawCanvas(){
+  const c=cv();if(!c)return;
+  const x=ctx();
+  const hSz=+document.getElementById('hSz').value||110;
+  const sSz=+document.getElementById('sSz').value||36;
+  const gnSz=+document.getElementById('gnSz').value||26;
+  const accent=document.getElementById('acCol').value||'#22C55E';
+
+  x.clearRect(0,0,W,H);
+  x.fillStyle='#111';x.fillRect(0,0,W,H);
+  if(bgImg)x.drawImage(bgImg,bgX,bgY,bgImg.width*bgScale,bgImg.height*bgScale);
+
+  // Gradient
+  const g1=x.createLinearGradient(0,H,0,0);
+  g1.addColorStop(0,'rgba(0,0,0,1)');g1.addColorStop(0.18,'rgba(0,0,0,0.98)');
+  g1.addColorStop(0.32,'rgba(0,0,0,0.90)');g1.addColorStop(0.48,'rgba(0,0,0,0.60)');
+  g1.addColorStop(0.62,'rgba(0,0,0,0.25)');g1.addColorStop(0.78,'rgba(0,0,0,0)');
+  x.fillStyle=g1;x.fillRect(0,0,W,H);
+  const g2=x.createLinearGradient(0,0,0,H*0.22);
+  g2.addColorStop(0,'rgba(0,0,0,0.6)');g2.addColorStop(1,'rgba(0,0,0,0)');
+  x.fillStyle=g2;x.fillRect(0,0,W,H*0.22);
+
+  if(!gData){
+    x.fillStyle='rgba(255,255,255,0.15)';x.font='400 32px monospace';x.textAlign='center';
+    x.fillText('กรอกชื่อเกมแล้วกด ▶ สร้าง CONTENT',W/2,H/2);
+    drawLogo(x);return;
+  }
+
+  // Logo top right
+  drawLogo(x);
+
+  // 1. Game name (separate draggable)
+  x.textAlign='left';
+  x.font='400 '+gnSz+'px monospace';
+  x.fillStyle='rgba(255,255,255,0.45)';
+  x.letterSpacing='4px';
+  x.fillText((gData.game_name||'').toUpperCase(),pos.gameName.x,pos.gameName.y);
+  x.letterSpacing='0px';
+
+  // 2. Hook text (separate draggable)
+  const hook=gData.hook_text||'',hl=gData.hook_highlight||'';
+  if(hl&&hook.includes(hl)){
+    const bi=hook.indexOf(hl),before=hook.substring(0,bi),after=hook.substring(bi+hl.length);
+    let cx=pos.hook.x;
+    x.fillStyle='#fff';x.font='900 '+hSz+'px Kanit,sans-serif';
+    if(before){x.fillText(before,cx,pos.hook.y);cx+=x.measureText(before).width;}
+    x.fillStyle=accent;x.font='italic 900 '+hSz+'px Kanit,sans-serif';
+    x.fillText(hl,cx,pos.hook.y);cx+=x.measureText(hl).width;
+    if(after){x.fillStyle='#fff';x.font='900 '+hSz+'px Kanit,sans-serif';x.fillText(after,cx,pos.hook.y);}
+  }else{
+    x.fillStyle='#fff';x.font='900 '+hSz+'px Kanit,sans-serif';x.fillText(hook,pos.hook.x,pos.hook.y);
+  }
+
+  // 3. Sub text (separate draggable)
+  x.fillStyle='rgba(255,255,255,0.72)';x.font='400 '+sSz+'px Kanit,sans-serif';
+  (gData.hook_sub||'').split('\n').forEach((ln,i)=>{
+    x.fillText(ln,pos.sub.x,pos.sub.y+sSz*1.55*i);
+  });
+
+  // Footer — text only, no logo
+  drawFooter(x);
+}
+
+function drawLogo(x){
+  if(!logoImg)return;
+  const lh=130,lw=logoImg.width*(lh/logoImg.height);
+  x.globalAlpha=0.9;x.drawImage(logoImg,W-lw-60,60,lw,lh);x.globalAlpha=1;
+}
+function drawFooter(x){
+  x.fillStyle='rgba(0,0,0,0.5)';x.fillRect(0,H-80,W,80);
+  x.strokeStyle='rgba(255,255,255,0.07)';x.lineWidth=1;
+  x.beginPath();x.moveTo(0,H-80);x.lineTo(W,H-80);x.stroke();
+  x.fillStyle='rgba(255,255,255,0.22)';x.font='300 20px monospace';
+  x.textAlign='left';x.fillText('OWARIN STORE',80,H-30);
+}
+
+function downloadImage(){
+  cv().toBlob(blob=>{
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download=(gData?.game_name||'owarin').replace(/[^a-zA-Z0-9ก-๙]/g,'_')+'.jpg';
+    a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  },'image/jpeg',0.95);
+}
+
+document.getElementById('bgFile').onchange=function(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{const img=new Image();img.onload=()=>{bgImg=img;fitBg();drawCanvas();};img.src=ev.target.result;};
+  reader.readAsDataURL(file);
+};
+
+async function generate(){
+  const name=document.getElementById('gameName').value.trim();
+  if(!name){setStatus('กรุณาใส่ชื่อเกมก่อนครับ','err');return;}
+  const key=getKey();
+  if(!key){setStatus('กรุณาใส่ Gemini API Key ก่อนครับ','err');return;}
+  const btn=document.getElementById('genBtn');
+  btn.disabled=true;btn.textContent='กำลังสร้าง...';
+  setStatus('กำลัง generate ด้วย Gemini 2.5 Pro...','');
+
+  const prompt=`จงสวมบทบาทเป็น Content Writer มืออาชีพของเพจ OWARIN STORE ร้านขายเกมเก่าเกมแท้
+
+═══════════════════════════════
+⚠️ เกมที่ต้องเขียนครั้งนี้คือ: ${name}
+⚠️ field game_name ต้องเป็น "${name}" เท่านั้น ห้ามเปลี่ยน
+═══════════════════════════════
+
+ภารกิจ: เขียนเฉพาะ "ความลับ / สิ่งที่น้อยคนรู้" เกี่ยวกับ「${name}」
+เน้น: easter eggs, development secrets, trivia ที่แทบไม่มีใครรู้, mechanics ซ่อนเร้น, เบื้องหลังการพัฒนา, ข้อเท็จจริงที่เพิ่งถูกค้นพบ
+
+กฎสำคัญเรื่องวิธีทำ (บังคับ):
+- ถ้าหัวข้อที่เขียนเป็นเรื่องที่ผู้อ่านต้องทำตามขั้นตอนเพื่อให้ได้ผลลัพธ์ เช่น การเจอบอสลับ การได้ไอเทมลับ การปลดล็อคฉากซ่อน Easter egg หรือสิ่งใดก็ตามที่มีเงื่อนไขก่อนถึงจะได้มา ต้องเขียนวิธีทำเป็น step-by-step ที่ชัดเจน ละเอียด ผู้อ่านสามารถทำตามได้จริงในเกม ไม่ใช่แค่บอกว่า "มีสิ่งนี้ซ่อนอยู่" แต่ต้องบอกด้วยว่า "ทำอย่างไรถึงจะเจอ/ได้มัน"
+
+กฎการจัดรูปแบบ (บังคับ):
+- ห้ามขึ้นต้นด้วย hashtag หรือ header ใดๆ
+- เปิดด้วยประโยคดึงดูดที่สุด
+- หลังทุกย่อหน้ามีบรรทัดว่าง 1 บรรทัด
+- ระหว่าง section ใช้ ─────────── คั่น
+- ตอบเป็น Pure JSON เท่านั้น เริ่ม { จบ } ห้ามใส่ backtick
+
+{"game_name":"${name}","category":"HIDDEN GEM","hook_text":"ประโยคเดียวภาษาไทย 15-25 ตัวอักษรเท่านั้น ห้ามเกิน 25 ตัวอักษร ห้ามวรรคตอน","hook_highlight":"คำใน hook_text ที่เน้นสี ต้องเป็น substring ตรงตัวอักษรจาก hook_text","hook_sub":"2 บรรทัดต่อเนื่อง ภาษาไทย รวม 50-75 ตัวอักษร คั่นบรรทัดด้วย \\n","fb_caption":"เปิดด้วยประโยคดึงดูดเรื่องความลับ ไม่มี header hashtag\\n\\nย่อหน้า 2 ขยายความ\\n\\n─────────────\\n\\n▶ ความลับที่น้อยคนรู้\\n\\n◉ [หัวข้อย่อย 1]\\n:\\nเนื้อหา 2-3 ย่อหน้า รู้ลึก อ้างอิงได้ (ถ้ามีเงื่อนไขต้องทำตามให้เขียน step-by-step)\\n\\n─────────────\\n\\n◉ [หัวข้อย่อย 2]\\n:\\nเนื้อหา 2-3 ย่อหน้า\\n\\n─────────────\\n\\n◉ [หัวข้อย่อย 3]\\n:\\nเนื้อหา 2-3 ย่อหน้า\\n\\n─────────────\\n\\n◉ [หัวข้อย่อย 4]\\n:\\nเนื้อหา 2-3 ย่อหน้า\\n\\n─────────────\\n\\n※ References & Sources\\n\\n　① ชื่อบทความ — แหล่งที่มา\\n　② ชื่อบทความ — แหล่งที่มา\\n　③ ชื่อบทความ — แหล่งที่มา\\n\\n─────────────\\n\\n↳ สั่งซื้อหนังสือบทสรุปเกม 「${name}」\\nhttps://m.me/owarinstore/"}`;
+
+  try{
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${key}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{temperature:0.9,maxOutputTokens:8192,responseMimeType:'application/json'}})
+    });
+    const data=await res.json();
+    if(data.error)throw new Error(data.error.message);
+    const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+    const clean=text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+    let parsed;
+    try{parsed=JSON.parse(clean);}catch(e){const m=clean.match(/\{[\s\S]*\}/);if(m)parsed=JSON.parse(m[0]);else throw new Error('Parse JSON ล้มเหลว');}
+    gData=parsed;
+    document.getElementById('acCol').value='#22C55E';
+    // Reset positions
+    pos.gameName={x:80,y:H-540};
+    pos.hook={x:80,y:H-400};
+    pos.sub={x:80,y:H-240};
+    drawCanvas();
+    document.getElementById('captionOut').value=parsed.fb_caption||'';
+    setStatus('สร้างสำเร็จ ✓','ok');
+  }catch(e){setStatus('Error: '+e.message,'err');}
+  btn.disabled=false;btn.textContent='▶ สร้าง CONTENT';
+}
+
+function copyCaption(){const ta=document.getElementById('captionOut');ta.select();document.execCommand('copy');setStatus('Copy แล้ว ✓','ok');}
+function setStatus(m,t){const el=document.getElementById('status');el.textContent=m;el.className='status'+(t?' '+t:'');}
+
+window.addEventListener('resize',()=>{const c=cv();if(c&&c.offsetWidth)c.style.height=(c.offsetWidth*H/W)+'px';});
+loadLogo().then(()=>document.fonts.ready.then(()=>setTimeout(initCanvas,100)));
+getKey();
+document.getElementById('gameName').addEventListener('keydown',e=>{if(e.key==='Enter')generate();});
+</script>
+</body>
+</html>
